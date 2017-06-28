@@ -5,7 +5,7 @@ import fontGot from './';
 
 var tmp = tmpdir('got-google-fonts');
 
-test(t => {
+test('pass', t => {
 	return fontGot(tmp, 'Droid Sans', {
 		variant: 'regular'
 	})
@@ -14,5 +14,14 @@ test(t => {
 		t.true(fs.existsSync(res[0]));
 	}, () => {
 		t.fail('Failed');
+	});
+});
+
+test('fail', t => {
+	return fontGot(tmp, 'HTTP400')
+	.then(() => {
+		t.fail('Failed');
+	}, (err) => {
+		t.true(err.statusCode === 400);
 	});
 });

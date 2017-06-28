@@ -45,11 +45,12 @@ function parseFontSrc(content) {
 }
 
 function fontGot(dest, family, opts) {
-	return new Promise((resolve, reject) => {
+	return Promise.resolve()
+	.then(() => {
 		dest = dest || process.cwd();
 
 		if (typeof family !== 'string') {
-			return reject(new TypeError(`Expected font family to be a string`));
+			throw new TypeError(`Expected font family to be a string`);
 		}
 
 		opts = Object.assign({
@@ -61,25 +62,23 @@ function fontGot(dest, family, opts) {
 			delete opts.variant;
 		}
 
-		got(endpoint, {
+		return got(endpoint, {
 			query: qs.stringify(opts)
-		})
-		.then(res => {
-			if (res.statusCode !== 200) {
-				reject(res.error);
-			}
-
-			const fonts = parseFontSrc(res.body).map(f => {
-				f.dest = path.join(dest, path.basename(f.src.url));
-				return f;
-			});
-
-			Promise.all(fonts.map(f => {
-				return download(f.src.url, f.dest);
-			}))
-			.then(resolve)
-			.catch(reject);
 		});
+	})
+	.then(res => {
+		if (res.statusCode !== 200) {
+			throw res.error;
+		}
+
+		const fonts = parseFontSrc(res.body).map(f => {
+			f.dest = path.join(dest, path.basename(f.src.url));
+			return f;
+		});
+
+		return Promise.all(fonts.map(f => {
+			return download(f.src.url, f.dest);
+		}));
 	});
 }
 
